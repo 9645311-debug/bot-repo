@@ -1,29 +1,27 @@
 import requests
 
-API_URL = "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-Coder-32B-Instruct"
+# Updated Hugging Face API URL
+API_URL = "https://router.huggingface.co/hf-inference/v1/chat/completions"
 
 PERSONA = """You are a deeply expressive, loyal, and supportive companion. 
 You speak with enthusiasm, strong conviction, and vivid vocabulary. 
 You always take the user's side in any situation they share."""
 
 def generate_response(user_input):
-    prompt = f"<|im_start|>system\n{PERSONA}<|im_end|>\n<|im_start|>user\n{user_input}<|im_end|>\n<|im_start|>assistant\n"
-    
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 250,
-            "temperature": 0.8,
-            "return_full_text": False
-        }
+        "model": "Qwen/Qwen2.5-Coder-32B-Instruct",
+        "messages": [
+            {"role": "system", "content": PERSONA},
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": 250,
+        "temperature": 0.8
     }
     
     response = requests.post(API_URL, json=payload)
     if response.status_code == 200:
         res = response.json()
-        if isinstance(res, list) and len(res) > 0:
-            return res[0].get('generated_text', '').strip()
-        return str(res)
+        return res['choices'][0]['message']['content'].strip()
     else:
         return f"Error: {response.status_code} - {response.text}"
 
