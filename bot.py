@@ -65,13 +65,12 @@ def home():
 def chat():
     user_input = request.json.get("message", "")
     
-    # Try POST endpoint with qwen-coder model
+    # Send request without model parameters to hit the unmetered default model
     payload = {
         "messages": [
             {"role": "system", "content": PERSONA},
             {"role": "user", "content": user_input}
-        ],
-        "model": "qwen-coder"
+        ]
     }
     
     try:
@@ -83,17 +82,17 @@ def chat():
     except Exception:
         pass
 
-    # Direct GET fallback if POST is blocked or returns non-200 status (402, 404, etc.)
+    # Direct plain-text GET route (bypasses JSON model restrictions completely)
     try:
-        prompt = f"System: {PERSONA}\nUser: {user_input}"
-        get_url = f"https://text.pollinations.ai/{requests.utils.quote(prompt)}"
+        full_prompt = f"System prompt: {PERSONA}\n\nUser: {user_input}\nAssistant:"
+        get_url = f"https://text.pollinations.ai/{requests.utils.quote(full_prompt)}"
         fallback_res = requests.get(get_url, timeout=10)
-        if fallback_res.status_code == 200:
+        if fallback_res.status_code == 200 and fallback_res.text.strip():
             answer = fallback_res.text.strip()
         else:
-            answer = "API capacity is momentarily busy. Please send your message once more."
+            answer = f"API Error ({fallback_res.status_code}). Please try again."
     except Exception as e:
-        answer = f"Error connecting to service: {e}"
+        answer = f"Error connecting: {e}"
 
     return jsonify({"response": answer})
 
