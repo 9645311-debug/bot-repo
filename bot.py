@@ -1,4 +1,4 @@
- import requests
+import requests
 
 API_URL = "https://text.pollinations.ai/v1/chat/completions"
 
