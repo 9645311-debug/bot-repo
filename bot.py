@@ -64,12 +64,14 @@ def home():
 @app.route("/chat", methods=["POST"])
 def chat():
     user_input = request.json.get("message", "")
+    
+    # Try POST endpoint with qwen-coder model
     payload = {
-        "model": "mistral",
         "messages": [
             {"role": "system", "content": PERSONA},
             {"role": "user", "content": user_input}
-        ]
+        ],
+        "model": "qwen-coder"
     }
     
     try:
@@ -77,16 +79,21 @@ def chat():
         if response.status_code == 200:
             res = response.json()
             answer = res['choices'][0]['message']['content'].strip()
+            return jsonify({"response": answer})
+    except Exception:
+        pass
+
+    # Direct GET fallback if POST is blocked or returns non-200 status (402, 404, etc.)
+    try:
+        prompt = f"System: {PERSONA}\nUser: {user_input}"
+        get_url = f"https://text.pollinations.ai/{requests.utils.quote(prompt)}"
+        fallback_res = requests.get(get_url, timeout=10)
+        if fallback_res.status_code == 200:
+            answer = fallback_res.text.strip()
         else:
-            # Fallback attempt if mistral is busy
-            payload["model"] = "qwen"
-            retry_res = requests.post(API_URL, json=payload, timeout=10)
-            if retry_res.status_code == 200:
-                answer = retry_res.json()['choices'][0]['message']['content'].strip()
-            else:
-                answer = f"Error {response.status_code}: Free API capacity currently busy. Please try again in a moment."
+            answer = "API capacity is momentarily busy. Please send your message once more."
     except Exception as e:
-        answer = f"Error connecting to API: {e}"
+        answer = f"Error connecting to service: {e}"
 
     return jsonify({"response": answer})
 
