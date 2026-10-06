@@ -1,7 +1,5 @@
+ import requests
 
-     import requests
-
-# Free open-access OpenAI-compatible endpoint (No API key needed)
 API_URL = "https://text.pollinations.ai/v1/chat/completions"
 
 PERSONA = """You are a deeply expressive, loyal, and supportive companion. 
